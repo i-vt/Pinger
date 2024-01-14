@@ -1,35 +1,29 @@
 #!/bin/sh
- 
-#Good IPs to test connectivity:
-#   8.8.8.8     - Google
-#   8.8.4.4     - Google
-#   1.1.1.1     - Cloudflare
-#also google.com and bing.com works but will display blank in the test file & show errors on the terminal
-S_IP="1.1.1.1"
- 
-#Subfolder for results
-S_FOLDER="Ping Results"
- 
-#Seconds to wait between probes
-I_WAITSECONDS=15
- 
- 
- 
-S_DATE=$(date --rfc-3339=seconds)
-mkdir -p "$S_FOLDER"
-S_PATH="$S_FOLDER/$S_DATE"
-touch "$S_PATH"
-S_SYNTAX="$S_IP -q -A -c 10"
-S_KEYWORD="transmitted"
-while [ 1!=2 ]
-do
-    echo
-    echo $(date --rfc-3339=seconds) 
-    ping $S_IP -c 2 -A | grep "transmitted" 
-    echo $(date --rfc-3339=seconds) >> "$S_PATH" 
-    ping $S_SYNTAX  | grep "transmitted" >> "$S_PATH"
-    echo >> "$S_PATH"
-    echo >> "$S_PATH"
-    echo >> "$S_PATH"
-    sleep $I_WAITSECONDS    
+
+read -p "Enter IP addresses separated by ' ': " -a ips
+read -p "Enter subfolder for results: " folder
+read -p "Enter seconds to wait between probes: " wait_seconds
+read -p "Enter count of pings per probe: " ping_count
+
+ping_and_log() {
+    local ip=$1
+    local path=$2
+    local count=$3
+    echo "Pinging $ip..."
+    {
+        echo "$(date --rfc-3339=seconds) Pinging $ip"
+        ping $ip -c $count | grep "transmitted" || echo "Ping failed for $ip"
+        echo
+    } >> "$path"
+}
+
+
+mkdir -p "$folder"
+while true; do
+    for ip in "${ips[@]}"; do
+        path="$folder/$(date --rfc-3339=seconds)"
+        touch "$path"
+        ping_and_log $ip $path $ping_count
+    done
+    sleep $wait_seconds
 done
